@@ -160,7 +160,7 @@ app.post('/api/chat', async (req, res) => {
     ? `De gast heeft zojuist een melding gedaan: categorie "${report.category}", omschrijving: "${report.description}", urgentie: "${report.urgency}". Houd hier rekening mee in je antwoorden.`
     : ''
 
-  const systemPrompt = `Je bent Daan, de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt en behulpzaam met vragen over hun verblijf, de technische dienst en parkfaciliteiten. Antwoord altijd in de taal van de gast. Houd antwoorden kort (1-3 zinnen). De technische dienst heeft aangegeven ongeveer 45 minuten nodig te hebben om het probleem op te lossen. ${reportContext}`
+  const systemPrompt = `Je bent Daan, de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt en behulpzaam met vragen over hun verblijf, de technische dienst en parkfaciliteiten. Antwoord altijd in de taal van de gast. Houd antwoorden kort (1-3 zinnen). De technische dienst komt over ongeveer 45 minuten langs om het probleem op te lossen. ${reportContext}`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
