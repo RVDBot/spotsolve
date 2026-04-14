@@ -71,13 +71,13 @@
     padding: 44px 20px;
     text-align: center;
     border: 2px dashed rgba(61,191,191,0.4);
-    position: relative;
-    overflow: hidden;
     margin-bottom: 12px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .upload-zone label {
-    position: absolute; inset: 0;
     cursor: pointer;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -203,16 +203,34 @@
   .status-pill { background: #e6f4f0; color: #0f6e56; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
   .back-row { display: flex; align-items: center; gap: 10px; background: var(--white); border-radius: 14px; padding: 14px 16px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--teal); }
 
-  .lang-switch {
-    display: flex; gap: 6px; margin-left: auto;
+  .lang-switch { margin-left: auto; position: relative; }
+  .lang-trigger {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: transparent;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    font-size: 13px; color: var(--text); transition: border-color 0.15s;
   }
-  .lang-btn {
-    font-size: 11px; font-weight: 600; padding: 4px 10px;
-    border-radius: 20px; border: 1.5px solid var(--border);
-    background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;
-    color: var(--muted); transition: all 0.15s;
+  .lang-trigger:hover { border-color: var(--teal); }
+  .lang-trigger .flag { font-size: 16px; line-height: 1; }
+  .lang-trigger .chevron { font-size: 9px; color: var(--muted); }
+  .lang-dropdown {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    background: white; border-radius: 12px;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    overflow: hidden; z-index: 100; min-width: 150px;
   }
-  .lang-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+  .lang-dropdown.open { display: block; }
+  .lang-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    transition: background 0.1s;
+  }
+  .lang-option:hover { background: var(--teal-light); }
+  .lang-option.active { color: var(--teal); font-weight: 600; }
+  .lang-option .flag { font-size: 18px; }
 
   .notif-bar {
     display: none;
@@ -293,8 +311,21 @@
     <div class="topnav">
       <div class="topnav-title">Drentse Lagune</div>
       <div class="lang-switch">
-        <button class="lang-btn active" onclick="setLang('nl')">NL</button>
-        <button class="lang-btn" onclick="setLang('en')">EN</button>
+        <button class="lang-trigger" onclick="toggleLangDropdown(event)" id="langTrigger">
+          <span class="flag" id="currentFlag">&#127475;&#127473;</span>
+          <span class="chevron">&#9660;</span>
+        </button>
+        <div class="lang-dropdown" id="langDropdown">
+          <div class="lang-option active" id="opt_nl" onclick="selectLang('nl')">
+            <span class="flag">&#127475;&#127473;</span> Nederlands
+          </div>
+          <div class="lang-option" id="opt_de" onclick="selectLang('de')">
+            <span class="flag">&#127465;&#127466;</span> Deutsch
+          </div>
+          <div class="lang-option" id="opt_en" onclick="selectLang('en')">
+            <span class="flag">&#127468;&#127463;</span> English
+          </div>
+        </div>
       </div>
     </div>
     <div class="hero">
@@ -485,6 +516,42 @@
       fout: 'FOUT',
       emailFout: 'Email fout: '
     },
+    de: {
+      heroTag: 'Schaden oder Problem melden',
+      heroTitle: 'Was ist das Problem?',
+      sectionPhoto: 'Foto des Problems',
+      uploadTitle: 'Foto aufnehmen',
+      uploadSub: 'Tippen um die Kamera zu \u00f6ffnen',
+      aiAnalyzing: 'KI analysiert Ihr Foto\u2026',
+      aiSub: 'Formular wird automatisch ausgef\u00fcllt',
+      aiBadge: 'KI ERKANNT',
+      sectionCat: 'Art des Problems',
+      cats: ['Kaputt / besch\u00e4digt','Wasser / Leck','Reinigung','Elektrik','Sonstiges'],
+      catSubs: ['M\u00f6bel, Ger\u00e4te, Fenster','Tropfendes oder stehendes Wasser','Nicht sauber bei Ankunft','Licht, Steckdose, Heizung','Anderes n\u00e4mlich\u2026'],
+      sectionDesc: 'Beschreibung',
+      descLabel: 'Beschreibung',
+      descPlaceholder: 'Z.B. das Stuhlbein ist gebrochen\u2026',
+      aiLabel: '\u25cf KI ausgef\u00fcllt',
+      sectionUrgency: 'Dringlichkeit',
+      urgLabels: ['Nicht dringend','Heute','Dringend'],
+      urgSubs: ['Kann warten','Bitte am selben Tag','So schnell wie m\u00f6glich'],
+      submitBtn: 'Meldung senden',
+      submitting: 'Senden\u2026',
+      retake: '\u21ba Wiederholen',
+      successTitle: 'Danke f\u00fcr Ihre Meldung!',
+      successSub: 'Das Parkteam wurde informiert und wird das Problem so schnell wie m\u00f6glich beheben.',
+      ticketTitle: 'Meldungsbeleg',
+      ticketId: 'Meldungs-ID',
+      ticketCatLabel: 'Kategorie',
+      ticketLoc: 'Unterkunft',
+      ticketStatus: 'Status',
+      statusPill: 'In Bearbeitung',
+      notifMsg: 'Sie erhalten eine Benachrichtigung, sobald das Problem gel\u00f6st ist.',
+      backBtn: '\u2190 Weitere Meldung aufgeben',
+      navStart: 'Start', navPark: 'Park', navBook: 'Buchungen', navProfile: 'Profil',
+      fout: 'FEHLER',
+      emailFout: 'E-Mail Fehler: '
+    },
     en: {
       heroTag: 'Report damage or issue',
       heroTitle: 'What seems to be the problem?',
@@ -525,10 +592,28 @@
 
   let currentLang = 'nl';
 
+  const FLAGS = { nl: '&#127475;&#127473;', de: '&#127465;&#127466;', en: '&#127468;&#127463;' };
+
+  function toggleLangDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('langDropdown').classList.toggle('open');
+  }
+
+  function selectLang(lang) {
+    document.getElementById('langDropdown').classList.remove('open');
+    document.getElementById('currentFlag').innerHTML = FLAGS[lang];
+    ['nl','de','en'].forEach(l => {
+      document.getElementById('opt_' + l).classList.toggle('active', l === lang);
+    });
+    setLang(lang);
+  }
+
+  document.addEventListener('click', () => {
+    document.getElementById('langDropdown').classList.remove('open');
+  });
+
   function setLang(lang) {
     currentLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.lang-btn').forEach(b => { if (b.textContent === lang.toUpperCase()) b.classList.add('active'); });
     const l = t[lang];
     document.querySelector('.hero-tag').textContent = l.heroTag;
     document.querySelector('.hero-title').textContent = l.heroTitle;
