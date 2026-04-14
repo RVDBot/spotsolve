@@ -341,9 +341,11 @@
 
       <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;">
       <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon-wrap">&#128247;</div>
-        <h3 id="uploadTitle">Maak een foto</h3>
-        <p id="uploadSub">Tik om de camera te openen</p>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div class="upload-icon-wrap">&#128247;</div>
+          <h3 id="uploadTitle">Maak een foto</h3>
+          <p id="uploadSub">Tik om de camera te openen</p>
+        </div>
       </div>
 
       <div class="preview-wrap" id="previewWrap">
@@ -421,20 +423,85 @@
 
   <!-- Success screen -->
   <div class="success-screen" id="successScreen">
-    <div class="statusbar"><span>10:56</span><span>&#9650; &#9670; 42%</span></div>
-    <div class="success-hero"><div class="success-check">&#10003;</div></div>
+    <div class="success-hero">
+      <div class="success-check">&#10003;</div>
+    </div>
     <div class="success-body">
-      <h2>Bedankt voor je melding!</h2>
-      <p>Het parkteam is op de hoogte gesteld en lost dit zo snel mogelijk op.</p>
+      <h2>Melding verstuurd!</h2>
+      <p>Het parkteam is op de hoogte en lost dit zo snel mogelijk op.</p>
+
+      <!-- Progress bar -->
+      <div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text);">Jouw meldingen dit verblijf</span>
+          <span style="font-size:13px;font-weight:700;color:var(--teal);">5 / 5</span>
+        </div>
+        <div style="background:#e8e8e8;border-radius:99px;height:8px;overflow:hidden;">
+          <div style="background:var(--teal);width:100%;height:100%;border-radius:99px;transition:width 1s ease;"></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;">&#127881; Je hebt alle 5 meldingen van dit verblijf gedaan!</p>
+      </div>
+
+      <!-- Voucher -->
+      <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:2px dashed rgba(61,191,191,0.4);">
+        <div style="background:var(--teal);padding:12px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">&#9749;</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:white;letter-spacing:0.5px;text-transform:uppercase;">Gratis koffievoucher</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.8);">Parkrestaurant — als dank voor je feedback</div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;align-items:center;gap:16px;">
+          <!-- Demo QR code (SVG) -->
+          <svg width="80" height="80" viewBox="0 0 80 80" style="flex-shrink:0;">
+            <rect width="80" height="80" fill="white"/>
+            <!-- QR modules (demo pattern) -->
+            <rect x="4" y="4" width="28" height="28" rx="2" fill="#1a1a1a"/>
+            <rect x="8" y="8" width="20" height="20" rx="1" fill="white"/>
+            <rect x="12" y="12" width="12" height="12" rx="1" fill="#1a1a1a"/>
+            <rect x="48" y="4" width="28" height="28" rx="2" fill="#1a1a1a"/>
+            <rect x="52" y="8" width="20" height="20" rx="1" fill="white"/>
+            <rect x="56" y="12" width="12" height="12" rx="1" fill="#1a1a1a"/>
+            <rect x="4" y="48" width="28" height="28" rx="2" fill="#1a1a1a"/>
+            <rect x="8" y="52" width="20" height="20" rx="1" fill="white"/>
+            <rect x="12" y="56" width="12" height="12" rx="1" fill="#1a1a1a"/>
+            <!-- Center modules -->
+            <rect x="36" y="4" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="4" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="36" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="44" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="52" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="60" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="68" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="36" y="44" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="44" y="44" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="60" y="44" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="36" y="52" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="52" y="52" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="68" y="52" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="44" y="60" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="52" y="60" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="60" y="60" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="36" y="68" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="52" y="68" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="68" y="68" width="4" height="4" fill="#1a1a1a"/>
+          </svg>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">1x Koffie of thee</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">Scan de QR-code aan de kassa van het parkrestaurant.</div>
+            <div style="font-size:11px;color:var(--teal);font-weight:600;margin-top:6px;">Geldig t/m einde verblijf</div>
+          </div>
+        </div>
+        <div style="background:#f8f8f5;padding:10px 16px;border-top:1px solid rgba(0,0,0,0.05);text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);">DEMO &bull; KOFFIE-2024-LGP</div>
+      </div>
+
       <div class="ticket-card">
         <div class="ticket-header">Meldingsbewijs</div>
         <div class="ticket-row"><span>Meldings-ID</span><span style="font-family:monospace;" id="ticketId">#LGP-20482</span></div>
         <div class="ticket-row"><span>Categorie</span><span id="ticketCat">&mdash;</span></div>
-        <div class="ticket-row"><span>Park</span><span>Drentse Lagune</span></div>
-        <div class="ticket-row"><span>Huisnummer</span><span>86</span></div>
-        <div class="ticket-row"><span>Boekingsnummer</span><span>81668765</span></div>
         <div class="ticket-row"><span>Status</span><span><span class="status-pill">In behandeling</span></span></div>
       </div>
+
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Je ontvangt een melding zodra het opgelost is.</p>
       <div class="back-row" onclick="resetApp()"><span style="font-size:18px;">&larr;</span> Nog een melding doen</div>
     </div>
