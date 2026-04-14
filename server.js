@@ -154,6 +154,13 @@ app.post('/api/chat', async (req, res) => {
   if (!apiKey) return res.status(400).json({ error: 'Anthropic API key not configured' })
 
   const messages = req.body.messages || []
+  const report = req.body.report || {}
+
+  const reportContext = report.category
+    ? `De gast heeft zojuist een melding gedaan: categorie "${report.category}", omschrijving: "${report.description}", urgentie: "${report.urgency}". Houd hier rekening mee in je antwoorden.`
+    : ''
+
+  const systemPrompt = `Je bent Daan, de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt en behulpzaam met vragen over hun verblijf, de technische dienst en parkfaciliteiten. Antwoord altijd in de taal van de gast. Houd antwoorden kort (1-3 zinnen). ${reportContext}`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -166,7 +173,7 @@ app.post('/api/chat', async (req, res) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 200,
-        system: 'Je bent de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt en behulpzaam met vragen over hun verblijf, de technische dienst en parkfaciliteiten. Antwoord altijd in de taal van de gast. Houd antwoorden kort (1-3 zinnen). Je naam is Daan.',
+        system: systemPrompt,
         messages,
       }),
     })

@@ -278,6 +278,8 @@
     padding: 28px 24px 20px;
     width: 88%;
     max-width: 340px;
+    max-height: 85vh;
+    overflow-y: auto;
     font-family: 'Inter', sans-serif;
     animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
   }
@@ -330,7 +332,7 @@
   .chat-input-row { display: flex; gap: 8px; }
   .chat-input {
     flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
-    padding: 9px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
+    padding: 9px 12px; font-size: 16px; font-family: 'Inter', sans-serif;
     outline: none; transition: border-color 0.15s;
   }
   .chat-input:focus { border-color: var(--teal); }
@@ -774,6 +776,7 @@
 
   let selectedCategory = '';
   let _emailjsConfig = {};
+  let lastReport = {};
 
   // Load config from server (EmailJS keys)
   fetch('/api/config').then(r => r.json()).then(cfg => {
@@ -937,6 +940,7 @@
       booking_number: '81668765',
       time: new Date().toLocaleString('nl-NL')
     }).then(() => {
+      lastReport = { category, description, urgency };
       document.getElementById('ticketCat').textContent = category;
       document.getElementById('formScreen').style.display = 'none';
       const s = document.getElementById('successScreen');
@@ -1076,7 +1080,7 @@
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: chatHistory }),
+        body: JSON.stringify({ messages: chatHistory, report: lastReport }),
       });
       const data = await res.json();
       const reply = data.content?.[0]?.text || 'Sorry, er ging iets mis.';
