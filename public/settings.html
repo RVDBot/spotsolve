@@ -148,6 +148,7 @@
 <script>
   let settings = {};
   let tokenUsage = null;
+  const SECTION_KEYS = {};
 
   const SECRET_KEYS = ['anthropic_api_key', 'emailjs_public_key', 'emailjs_service_id', 'emailjs_template_id'];
 
@@ -204,6 +205,7 @@
 
   function section(title, keys, bodyHtml, isOk) {
     const sectionId = 'sec_' + keys[0];
+    SECTION_KEYS[sectionId] = keys;
     return `
       <div class="section">
         <button class="section-header" onclick="toggleSection('${sectionId}')">
@@ -213,7 +215,7 @@
         </button>
         <div class="section-body" id="${sectionId}">
           ${bodyHtml}
-          <button class="save-btn" id="btn_${sectionId}" onclick="saveSection('${sectionId}', ${JSON.stringify(keys)})">Opslaan</button>
+          <button class="save-btn" id="btn_${sectionId}" onclick="saveSection('${sectionId}')">Opslaan</button>
         </div>
       </div>`;
   }
@@ -226,7 +228,8 @@
     chev.classList.toggle('open', !isOpen);
   }
 
-  async function saveSection(sectionId, keys) {
+  async function saveSection(sectionId) {
+    const keys = SECTION_KEYS[sectionId] || [];
     const btn = document.getElementById('btn_' + sectionId);
     btn.disabled = true;
     btn.textContent = 'Opslaan...';
