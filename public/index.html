@@ -430,20 +430,23 @@
       <h2>Melding verstuurd!</h2>
       <p>Het parkteam is op de hoogte en lost dit zo snel mogelijk op.</p>
 
+      <!-- Confetti canvas -->
+      <canvas id="confettiCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:9999;width:100%;height:100%;"></canvas>
+
       <!-- Progress bar -->
       <div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <span style="font-size:13px;font-weight:600;color:var(--text);">Jouw meldingen dit verblijf</span>
-          <span style="font-size:13px;font-weight:700;color:var(--teal);">5 / 5</span>
+          <span style="font-size:13px;font-weight:700;color:var(--teal);" id="progressLabel">4 / 5</span>
         </div>
         <div style="background:#e8e8e8;border-radius:99px;height:8px;overflow:hidden;">
-          <div style="background:var(--teal);width:100%;height:100%;border-radius:99px;transition:width 1s ease;"></div>
+          <div id="progressBar" style="background:var(--teal);width:80%;height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);"></div>
         </div>
-        <p style="font-size:11px;color:var(--muted);margin-top:8px;">&#127881; Je hebt alle 5 meldingen van dit verblijf gedaan!</p>
+        <p id="progressMsg" style="font-size:11px;color:var(--muted);margin-top:8px;">Nog 1 melding te gaan voor je voucher!</p>
       </div>
 
-      <!-- Voucher -->
-      <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:2px dashed rgba(61,191,191,0.4);">
+      <!-- Voucher (hidden until 5/5) -->
+      <div id="voucherCard" style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:2px dashed rgba(61,191,191,0.4);display:none;opacity:0;transform:translateY(12px);transition:opacity 0.5s ease,transform 0.5s ease;">
         <div style="background:var(--teal);padding:12px 16px;display:flex;align-items:center;gap:10px;">
           <span style="font-size:20px;">&#9749;</span>
           <div>
@@ -452,10 +455,8 @@
           </div>
         </div>
         <div style="padding:16px;display:flex;align-items:center;gap:16px;">
-          <!-- Demo QR code (SVG) -->
           <svg width="80" height="80" viewBox="0 0 80 80" style="flex-shrink:0;">
             <rect width="80" height="80" fill="white"/>
-            <!-- QR modules (demo pattern) -->
             <rect x="4" y="4" width="28" height="28" rx="2" fill="#1a1a1a"/>
             <rect x="8" y="8" width="20" height="20" rx="1" fill="white"/>
             <rect x="12" y="12" width="12" height="12" rx="1" fill="#1a1a1a"/>
@@ -465,7 +466,6 @@
             <rect x="4" y="48" width="28" height="28" rx="2" fill="#1a1a1a"/>
             <rect x="8" y="52" width="20" height="20" rx="1" fill="white"/>
             <rect x="12" y="56" width="12" height="12" rx="1" fill="#1a1a1a"/>
-            <!-- Center modules -->
             <rect x="36" y="4" width="4" height="4" fill="#1a1a1a"/>
             <rect x="4" y="36" width="4" height="4" fill="#1a1a1a"/>
             <rect x="36" y="36" width="4" height="4" fill="#1a1a1a"/>
@@ -893,12 +893,100 @@
       const s = document.getElementById('successScreen');
       s.style.display = 'flex';
       s.style.flexDirection = 'column';
+      startProgressAnimation();
       setTimeout(showNotification, 10000);
     }).catch((err) => {
       btn.textContent = t[currentLang].submitBtn;
       btn.disabled = false;
       alert(t[currentLang].emailFout + JSON.stringify(err));
     });
+  }
+
+  function startProgressAnimation() {
+    // Reset state
+    document.getElementById('progressBar').style.width = '80%';
+    document.getElementById('progressLabel').textContent = '4 / 5';
+    document.getElementById('progressMsg').textContent = 'Nog 1 melding te gaan voor je voucher!';
+    document.getElementById('voucherCard').style.display = 'none';
+    document.getElementById('voucherCard').style.opacity = '0';
+    document.getElementById('voucherCard').style.transform = 'translateY(12px)';
+
+    // Animate to 5/5 after short delay
+    setTimeout(() => {
+      document.getElementById('progressBar').style.width = '100%';
+      document.getElementById('progressLabel').textContent = '5 / 5';
+
+      // After bar completes, show celebration
+      setTimeout(() => {
+        document.getElementById('progressMsg').textContent = '\uD83C\uDF89 Je hebt alle 5 meldingen gedaan!';
+        launchConfetti();
+
+        // Show voucher with fade-in
+        const v = document.getElementById('voucherCard');
+        v.style.display = 'block';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          v.style.opacity = '1';
+          v.style.transform = 'translateY(0)';
+        }));
+      }, 1300);
+    }, 600);
+  }
+
+  function launchConfetti() {
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#3DBFBF','#2A9494','#F5EFE0','#E8650A','#f0c040','#e06090'];
+    const pieces = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 200,
+      w: 8 + Math.random() * 8,
+      h: 4 + Math.random() * 4,
+      r: Math.random() * Math.PI * 2,
+      dr: (Math.random() - 0.5) * 0.15,
+      dy: 2.5 + Math.random() * 3,
+      dx: (Math.random() - 0.5) * 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      opacity: 1,
+    }));
+
+    let frame;
+    let start = null;
+    const duration = 3500;
+
+    function draw(ts) {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let active = false;
+      for (const p of pieces) {
+        p.y += p.dy;
+        p.x += p.dx;
+        p.r += p.dr;
+        if (elapsed > duration * 0.6) p.opacity = Math.max(0, p.opacity - 0.015);
+        if (p.y < canvas.height + 20) active = true;
+
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+
+      if (active && elapsed < duration + 1000) {
+        frame = requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    if (frame) cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(draw);
   }
 
   function showNotification() {
