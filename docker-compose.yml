@@ -1,0 +1,8 @@
+services:
+  spotsolve:
+    image: ghcr.io/rvdbot/spotsolve:latest
+    ports:
+      - "3031:80"
+    volumes:
+      - ./config.js:/usr/share/nginx/html/config.js:ro
+    restart: unless-stopped
