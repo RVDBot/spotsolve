@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="nl"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpotSolve — Schade melden</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    --teal: #3DBFBF;
+    --teal-dark: #2A9494;
+    --teal-light: #e8f7f7;
+    --cream: #F5EFE0;
+    --text: #1a1a1a;
+    --muted: #666;
+    --border: rgba(0,0,0,0.1);
+    --white: #ffffff;
+    --orange: #E8650A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #e8e0cc;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    background: var(--cream);
+    border-radius: 40px;
+    overflow: hidden;
+    border: 2px solid rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 820px;
+  }
+  .statusbar {
+    background: var(--cream);
+    padding: 12px 24px 4px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .topnav {
+    background: var(--cream);
+    padding: 8px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topnav-title { font-size: 17px; font-weight: 600; color: var(--text); }
+  .hero {
+    position: relative;
+    height: 140px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #7eb8b8 0%, #3DBFBF 50%, #2A9494 100%);
+    display: flex; align-items: flex-end;
+    padding: 16px 20px;
+  }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.55) 100%);
+  }
+  .hero-text { position: relative; z-index: 1; }
+  .hero-tag { font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 2px; }
+  .hero-title { font-size: 20px; font-weight: 700; color: white; }
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 80px;
+    background: var(--cream);
+  }
+  .section-title { font-size: 17px; font-weight: 700; color: var(--text); margin: 16px 0 10px; }
+  .upload-zone {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 44px 20px;
+    text-align: center;
+    border: 2px dashed rgba(61,191,191,0.4);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+    cursor: pointer;
+  }
+  .upload-zone label {
+    position: absolute; inset: 0;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+  }
+  .upload-zone input[type=file] { display: none; }
+  .upload-icon-wrap {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--teal-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+  }
+  .upload-zone h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+  .upload-zone p { font-size: 13px; color: var(--muted); }
+  .preview-wrap { display: none; border-radius: 16px; overflow: hidden; margin-bottom: 12px; position: relative; }
+  .preview-wrap img { width: 100%; height: 180px; object-fit: cover; display: block; }
+  .retake-btn {
+    position: absolute; bottom: 10px; right: 10px;
+    background: rgba(0,0,0,0.5); color: white; border: none;
+    border-radius: 20px; padding: 6px 14px; font-size: 12px;
+    font-family: 'Inter', sans-serif; cursor: pointer;
+  }
+  .ai-analyzing {
+    background: var(--white); border-radius: 14px;
+    padding: 14px 16px; display: none;
+    align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .ai-spin {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--teal-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.12);opacity:0.75} }
+  .ai-analyzing p { font-size: 13px; color: var(--text); font-weight: 500; }
+  .ai-analyzing small { font-size: 11px; color: var(--muted); }
+  .ai-result {
+    background: var(--teal-light); border-radius: 14px;
+    padding: 12px 16px; display: none;
+    margin-bottom: 12px; border-left: 3px solid var(--teal);
+  }
+  .ai-badge {
+    display: inline-block; background: var(--teal); color: white;
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .ai-result p { font-size: 13px; color: #1a4040; line-height: 1.5; }
+  .row-card { background: var(--white); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+  .row-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background 0.15s;
+  }
+  .row-item:last-child { border-bottom: none; }
+  .row-item:hover { background: #faf9f5; }
+  .row-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0; background: var(--teal-light);
+  }
+  .row-text h4 { font-size: 14px; font-weight: 600; color: var(--text); }
+  .row-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .row-check {
+    margin-left: auto; width: 22px; height: 22px;
+    border-radius: 50%; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: white; flex-shrink: 0;
+  }
+  .row-check.active { background: var(--teal); border-color: var(--teal); }
+  .input-card { background: var(--white); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; }
+  .input-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .input-card textarea {
+    width: 100%; border: none; outline: none;
+    font-size: 14px; font-family: 'Inter', sans-serif;
+    color: var(--text); background: transparent;
+    resize: none; line-height: 1.5;
+  }
+  .input-card textarea::placeholder { color: #bbb; }
+  .cta-btn {
+    width: 100%; background: var(--teal); color: white;
+    border: none; border-radius: 14px; padding: 16px;
+    font-size: 16px; font-weight: 600; font-family: 'Inter', sans-serif;
+    cursor: pointer; margin-top: 8px; transition: background 0.2s;
+  }
+  .cta-btn:hover { background: var(--teal-dark); }
+  .cta-btn:disabled { background: #a8d8d8; cursor: not-allowed; }
+  .bottomnav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--white); border-top: 1px solid var(--border);
+    display: flex; border-radius: 0 0 38px 38px; overflow: hidden;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; padding: 10px 4px 16px;
+    font-size: 10px; color: var(--muted); cursor: pointer; gap: 4px;
+  }
+  .nav-item.active { color: var(--teal); }
+  .success-screen {
+    display: none; flex-direction: column; flex: 1;
+    background: var(--cream);
+  }
+  .success-hero {
+    background: linear-gradient(135deg, #7eb8b8, #2A9494);
+    height: 140px; display: flex; align-items: center; justify-content: center;
+  }
+  .success-check {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: white; display: flex; align-items: center;
+    justify-content: center; font-size: 32px; color: var(--teal);
+    font-weight: 700;
+  }
+  .success-body { padding: 20px 16px 80px; }
+  .success-body h2 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .success-body > p { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .ticket-card { background: var(--white); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
+  .ticket-header { background: var(--teal); padding: 12px 16px; font-size: 12px; font-weight: 700; color: white; letter-spacing: 0.5px; text-transform: uppercase; }
+  .ticket-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 13px; }
+  .ticket-row:last-child { border-bottom: none; }
+  .ticket-row span:first-child { color: var(--muted); }
+  .ticket-row span:last-child { font-weight: 600; color: var(--text); }
+  .status-pill { background: #e6f4f0; color: #0f6e56; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .back-row { display: flex; align-items: center; gap: 10px; background: var(--white); border-radius: 14px; padding: 14px 16px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--teal); }
+
+  .lang-switch {
+    display: flex; gap: 6px; margin-left: auto;
+  }
+  .lang-btn {
+    font-size: 11px; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px; border: 1.5px solid var(--border);
+    background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;
+    color: var(--muted); transition: all 0.15s;
+  }
+  .lang-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+  .notif-bar {
+    display: none;
+    position: fixed;
+    top: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    max-width: 340px;
+    width: 90%;
+    animation: slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    align-items: center;
+    gap: 10px;
+  }
+  @keyframes slideDown {
+    from { opacity:0; transform: translateX(-50%) translateY(-20px); }
+    to   { opacity:1; transform: translateX(-50%) translateY(0); }
+  }
+  .notif-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--teal); flex-shrink: 0;
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .notif-arrow { margin-left: auto; font-size: 16px; opacity: 0.6; }
+
+  .status-popup-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+  }
+  .status-popup {
+    background: white;
+    border-radius: 20px;
+    padding: 28px 24px 20px;
+    width: 88%;
+    max-width: 340px;
+    font-family: 'Inter', sans-serif;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { opacity:0; transform: scale(0.85); }
+    to   { opacity:1; transform: scale(1); }
+  }
+  .popup-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--teal-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin-bottom: 16px;
+  }
+  .status-popup h3 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
+  .status-popup p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; }
+  .popup-ok {
+    width: 100%; background: var(--teal); color: white;
+    border: none; border-radius: 12px; padding: 14px;
+    font-size: 15px; font-weight: 600; font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+  .popup-ok:hover { background: var(--teal-dark); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>10:55</span><span>&#9650; &#9670; 42%</span></div>
+
+  <!-- Form screen -->
+  <div id="formScreen" style="display:flex;flex-direction:column;flex:1;">
+    <div class="topnav">
+      <div class="topnav-title">Drentse Lagune</div>
+      <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLang('nl')">NL</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+    <div class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-text">
+        <div class="hero-tag">Schade of probleem melden</div>
+        <div class="hero-title">Wat is er aan de hand?</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="section-title" id="sectionPhoto">Foto van het probleem</div>
+
+      <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon-wrap">&#128247;</div>
+        <h3 id="uploadTitle">Maak een foto</h3>
+        <p id="uploadSub">Tik om de camera te openen</p>
+      </div>
+
+      <div class="preview-wrap" id="previewWrap">
+        <img id="previewImg" src="" alt="Foto">
+        <button class="retake-btn" onclick="retakePhoto()">&#8634; Opnieuw</button>
+      </div>
+
+      <div class="ai-analyzing" id="aiAnalyzing">
+        <div class="ai-spin">&#128269;</div>
+        <div><p>AI analyseert je foto&hellip;</p><small>Formulier wordt automatisch ingevuld</small></div>
+      </div>
+
+      <div class="ai-result" id="aiResult">
+        <div class="ai-badge">AI GEDETECTEERD</div>
+        <p id="aiResultText"></p>
+      </div>
+
+      <div class="section-title">Soort probleem</div>
+      <div class="row-card" id="categoryCard">
+        <div class="row-item" onclick="selectCat(0,'Kapot / beschadigd')">
+          <div class="row-icon">&#128295;</div>
+          <div class="row-text"><h4>Kapot / beschadigd</h4><p>Meubels, apparaten, ramen</p></div>
+          <div class="row-check" id="check_0"></div>
+        </div>
+        <div class="row-item" onclick="selectCat(1,'Water / lekkage')">
+          <div class="row-icon">&#128167;</div>
+          <div class="row-text"><h4>Water / lekkage</h4><p>Druppend of staand water</p></div>
+          <div class="row-check" id="check_1"></div>
+        </div>
+        <div class="row-item" onclick="selectCat(2,'Schoonmaak')">
+          <div class="row-icon">&#129529;</div>
+          <div class="row-text"><h4>Schoonmaak</h4><p>Niet schoon bij aankomst</p></div>
+          <div class="row-check" id="check_2"></div>
+        </div>
+        <div class="row-item" onclick="selectCat(3,'Elektra')">
+          <div class="row-icon">&#128161;</div>
+          <div class="row-text"><h4>Elektra</h4><p>Licht, stopcontact, verwarming</p></div>
+          <div class="row-check" id="check_3"></div>
+        </div>
+        <div class="row-item" onclick="selectCat(4,'Overig')">
+          <div class="row-icon">&#10067;</div>
+          <div class="row-text"><h4>Overig</h4><p>Anders namelijk&hellip;</p></div>
+          <div class="row-check" id="check_4"></div>
+        </div>
+      </div>
+
+      <div class="section-title">Omschrijving</div>
+      <div class="input-card" id="descCard">
+        <div class="input-label">Beschrijving <span id="dotDesc" style="display: none; color: var(--teal); font-weight: 500;">&#9679; AI ingevuld</span></div>
+        <textarea id="descInput" rows="3" placeholder="Bijv. de stoelpoot is gebroken&hellip;"></textarea>
+      </div>
+
+      <div class="section-title">Urgentie</div>
+      <div class="row-card">
+        <div class="row-item" onclick="selectUrgency(0)">
+          <div class="row-icon">&#128994;</div>
+          <div class="row-text"><h4>Niet urgent</h4><p>Kan wachten</p></div>
+          <div class="row-check" id="urg_0"></div>
+        </div>
+        <div class="row-item" onclick="selectUrgency(1)">
+          <div class="row-icon">&#128993;</div>
+          <div class="row-text"><h4>Vandaag</h4><p>Graag dezelfde dag</p></div>
+          <div class="row-check" id="urg_1"></div>
+        </div>
+        <div class="row-item" onclick="selectUrgency(2)">
+          <div class="row-icon">&#128308;</div>
+          <div class="row-text"><h4>Spoed</h4><p>Zo snel mogelijk</p></div>
+          <div class="row-check" id="urg_2"></div>
+        </div>
+      </div>
+
+      <button class="cta-btn" id="submitBtn" onclick="submitReport()">Melding versturen</button>
+    </div>
+  </div>
+
+  <!-- Success screen -->
+  <div class="success-screen" id="successScreen">
+    <div class="statusbar"><span>10:56</span><span>&#9650; &#9670; 42%</span></div>
+    <div class="success-hero"><div class="success-check">&#10003;</div></div>
+    <div class="success-body">
+      <h2>Bedankt voor je melding!</h2>
+      <p>Het parkteam is op de hoogte gesteld en lost dit zo snel mogelijk op.</p>
+      <div class="ticket-card">
+        <div class="ticket-header">Meldingsbewijs</div>
+        <div class="ticket-row"><span>Meldings-ID</span><span style="font-family:monospace;" id="ticketId">#LGP-20482</span></div>
+        <div class="ticket-row"><span>Categorie</span><span id="ticketCat">&mdash;</span></div>
+        <div class="ticket-row"><span>Park</span><span>Drentse Lagune</span></div>
+        <div class="ticket-row"><span>Huisnummer</span><span>86</span></div>
+        <div class="ticket-row"><span>Boekingsnummer</span><span>81668765</span></div>
+        <div class="ticket-row"><span>Status</span><span><span class="status-pill">In behandeling</span></span></div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Je ontvangt een melding zodra het opgelost is.</p>
+      <div class="back-row" onclick="resetApp()"><span style="font-size:18px;">&larr;</span> Nog een melding doen</div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottomnav">
+    <div class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+      Start
+    </div>
+    <div class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      Park
+    </div>
+    <div class="nav-item active">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path><line x1="12" y1="12" x2="12" y2="16"></line><line x1="10" y1="14" x2="14" y2="14"></line></svg>
+      Boekingen
+    </div>
+    <div class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      Profiel
+    </div>
+  </div>
+</div>
+
+<!-- Notification bar -->
+<div class="notif-bar" id="notifBar" onclick="openStatusPopup()" style="display:none;">
+  <div class="notif-dot"></div>
+  <span>Je probleem is in behandeling genomen</span>
+  <span class="notif-arrow">&#8250;</span>
+</div>
+
+<!-- Status popup overlay -->
+<div class="status-popup-overlay" id="statusOverlay" onclick="closePopupOutside(event)">
+  <div class="status-popup">
+    <div class="popup-icon">&#128295;</div>
+    <h3>Status van je melding</h3>
+    <p>Technische dienst gaat ongeveer <strong>45 minuten</strong> het probleem oplossen. Je hoeft hiervoor niet in je huisje te blijven.</p>
+    <button class="popup-ok" onclick="closeStatusPopup()">OK, begrepen</button>
+  </div>
+</div>
+
+<script>
+  const t = {
+    nl: {
+      heroTag: 'Schade of probleem melden',
+      heroTitle: 'Wat is er aan de hand?',
+      sectionPhoto: 'Foto van het probleem',
+      uploadTitle: 'Maak een foto',
+      uploadSub: 'Tik om de camera te openen',
+      aiAnalyzing: 'AI analyseert je foto\u2026',
+      aiSub: 'Formulier wordt automatisch ingevuld',
+      aiBadge: 'AI GEDETECTEERD',
+      sectionCat: 'Soort probleem',
+      cats: ['Kapot / beschadigd','Water / lekkage','Schoonmaak','Elektra','Overig'],
+      catSubs: ['Meubels, apparaten, ramen','Druppend of staand water','Niet schoon bij aankomst','Licht, stopcontact, verwarming','Anders namelijk\u2026'],
+      sectionDesc: 'Omschrijving',
+      descLabel: 'Beschrijving',
+      descPlaceholder: 'Bijv. de stoelpoot is gebroken\u2026',
+      aiLabel: '\u25cf AI ingevuld',
+      sectionUrgency: 'Urgentie',
+      urgLabels: ['Niet urgent','Vandaag','Spoed'],
+      urgSubs: ['Kan wachten','Graag dezelfde dag','Zo snel mogelijk'],
+      submitBtn: 'Melding versturen',
+      submitting: 'Versturen\u2026',
+      retake: '\u21ba Opnieuw',
+      successTitle: 'Bedankt voor je melding!',
+      successSub: 'Het parkteam is op de hoogte gesteld en lost dit zo snel mogelijk op.',
+      ticketTitle: 'Meldingsbewijs',
+      ticketId: 'Meldings-ID',
+      ticketCatLabel: 'Categorie',
+      ticketLoc: 'Accommodatie',
+      ticketStatus: 'Status',
+      statusPill: 'In behandeling',
+      notifMsg: 'Je ontvangt een melding zodra het opgelost is.',
+      backBtn: '\u2190 Nog een melding doen',
+      navStart: 'Start', navPark: 'Park', navBook: 'Boekingen', navProfile: 'Profiel',
+      fout: 'FOUT',
+      emailFout: 'Email fout: '
+    },
+    en: {
+      heroTag: 'Report damage or issue',
+      heroTitle: 'What seems to be the problem?',
+      sectionPhoto: 'Photo of the issue',
+      uploadTitle: 'Take a photo',
+      uploadSub: 'Tap to open camera',
+      aiAnalyzing: 'AI is analyzing your photo\u2026',
+      aiSub: 'Form will be filled in automatically',
+      aiBadge: 'AI DETECTED',
+      sectionCat: 'Type of issue',
+      cats: ['Broken / damaged','Water / leak','Cleaning','Electricity','Other'],
+      catSubs: ['Furniture, appliances, windows','Dripping or standing water','Not clean on arrival','Lights, outlets, heating','Something else\u2026'],
+      sectionDesc: 'Description',
+      descLabel: 'Description',
+      descPlaceholder: 'E.g. the chair leg is broken\u2026',
+      aiLabel: '\u25cf AI filled in',
+      sectionUrgency: 'Urgency',
+      urgLabels: ['Not urgent','Today','Urgent'],
+      urgSubs: ['Can wait','Preferably same day','As soon as possible'],
+      submitBtn: 'Send report',
+      submitting: 'Sending\u2026',
+      retake: '\u21ba Retake',
+      successTitle: 'Thanks for your report!',
+      successSub: 'The park team has been notified and will resolve this as soon as possible.',
+      ticketTitle: 'Report receipt',
+      ticketId: 'Report ID',
+      ticketCatLabel: 'Category',
+      ticketLoc: 'Accommodation',
+      ticketStatus: 'Status',
+      statusPill: 'In progress',
+      notifMsg: 'You will receive a notification once it is resolved.',
+      backBtn: '\u2190 Report another issue',
+      navStart: 'Start', navPark: 'Park', navBook: 'Bookings', navProfile: 'Profile',
+      fout: 'ERROR',
+      emailFout: 'Email error: '
+    }
+  };
+
+  let currentLang = 'nl';
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.lang-btn').forEach(b => { if (b.textContent === lang.toUpperCase()) b.classList.add('active'); });
+    const l = t[lang];
+    document.querySelector('.hero-tag').textContent = l.heroTag;
+    document.querySelector('.hero-title').textContent = l.heroTitle;
+    document.querySelectorAll('.section-title')[0].textContent = l.sectionPhoto;
+    document.querySelector('.upload-zone h3').textContent = l.uploadTitle;
+    document.querySelector('.upload-zone p').textContent = l.uploadSub;
+    document.querySelector('#aiAnalyzing p').textContent = l.aiAnalyzing;
+    document.querySelector('#aiAnalyzing small').textContent = l.aiSub;
+    document.querySelectorAll('.section-title')[1].textContent = l.sectionCat;
+    const rows = document.querySelectorAll('#categoryCard .row-item');
+    rows.forEach((r, i) => {
+      r.querySelector('h4').textContent = l.cats[i];
+      r.querySelector('p').textContent = l.catSubs[i];
+      r.onclick = () => selectCat(i, l.cats[i]);
+    });
+    document.querySelectorAll('.section-title')[2].textContent = l.sectionDesc;
+    document.querySelector('.input-label').childNodes[0].textContent = l.descLabel + ' ';
+    document.getElementById('descInput').placeholder = l.descPlaceholder;
+    document.getElementById('dotDesc').textContent = l.aiLabel;
+    document.querySelectorAll('.section-title')[3].textContent = l.sectionUrgency;
+    const urgRows = document.querySelectorAll('.row-card:last-of-type .row-item');
+    urgRows.forEach((r, i) => {
+      r.querySelector('h4').textContent = l.urgLabels[i];
+      r.querySelector('p').textContent = l.urgSubs[i];
+    });
+    document.getElementById('submitBtn').textContent = l.submitBtn;
+    document.querySelector('.retake-btn').textContent = l.retake;
+    document.querySelector('.success-body h2').textContent = l.successTitle;
+    const successPs = document.querySelectorAll('.success-body > p');
+    if (successPs[0]) successPs[0].textContent = l.successSub;
+    if (successPs[1]) successPs[1].textContent = l.notifMsg;
+    document.querySelector('.ticket-header').textContent = l.ticketTitle;
+    document.querySelector('.back-row').innerHTML = l.backBtn;
+    document.querySelector('.back-row').onclick = resetApp;
+    const navItems = document.querySelectorAll('.nav-item');
+    [l.navStart, l.navPark, l.navBook, l.navProfile].forEach((label, i) => {
+      const svg = navItems[i].querySelector('svg');
+      navItems[i].textContent = label;
+      navItems[i].prepend(svg);
+    });
+  }
+
+  emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
+
+  let selectedCategory = '';
+  let photoBase64 = '';
+
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    document.getElementById('previewImg').src = url;
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('aiAnalyzing').style.display = 'flex';
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX = 1000;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        photoBase64 = canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+        analyzeWithAI(photoBase64);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function analyzeWithAI(base64Image) {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CONFIG.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          system: 'Je analyseert fotos van schade of problemen in vakantiewoningen. Antwoord ALLEEN met geldige JSON, geen markdown. Formaat: {"category": een van ["Kapot / beschadigd","Water / lekkage","Schoonmaak","Elektra","Overig"], "description": "korte Nederlandse zin die het probleem beschrijft", "urgency": een van ["Niet urgent","Vandaag","Spoed"]}',
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Image } },
+              { type: 'text', text: 'Wat zie je op deze foto? Antwoord alleen met JSON.' }
+            ]
+          }]
+        })
+      });
+
+      document.getElementById('aiAnalyzing').style.display = 'none';
+      const data = await response.json();
+
+      if (!response.ok) {
+        showError('API fout: ' + (data.error?.message || response.status));
+        return;
+      }
+
+      const text = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+      const result = JSON.parse(text);
+      showAIResult(result);
+
+    } catch(err) {
+      document.getElementById('aiAnalyzing').style.display = 'none';
+      showError('Fout: ' + err.message);
+    }
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('aiResult');
+    box.style.display = 'block';
+    box.style.borderLeftColor = '#E8650A';
+    box.style.background = '#fdf0e8';
+    document.getElementById('aiResultText').textContent = msg;
+    document.querySelector('.ai-badge').textContent = t[currentLang].fout;
+    document.querySelector('.ai-badge').style.background = '#E8650A';
+  }
+
+  function showAIResult(result) {
+    const box = document.getElementById('aiResult');
+    box.style.borderLeftColor = 'var(--teal)';
+    box.style.background = 'var(--teal-light)';
+    box.style.display = 'block';
+    document.querySelector('.ai-badge').textContent = t[currentLang].aiBadge;
+    document.querySelector('.ai-badge').style.background = 'var(--teal)';
+    document.getElementById('aiResultText').textContent = result.description;
+
+    const cats = ['Kapot / beschadigd','Water / lekkage','Schoonmaak','Elektra','Overig'];
+    setTimeout(() => {
+      const idx = cats.indexOf(result.category);
+      if (idx >= 0) selectCat(idx, result.category);
+    }, 300);
+    setTimeout(() => {
+      document.getElementById('descInput').value = result.description;
+      document.getElementById('dotDesc').style.display = 'inline';
+    }, 600);
+    setTimeout(() => {
+      const umap = {'Niet urgent':0,'Vandaag':1,'Spoed':2};
+      if (umap[result.urgency] !== undefined) selectUrgency(umap[result.urgency]);
+    }, 900);
+  }
+
+  function selectCat(idx, value) {
+    selectedCategory = value;
+    for (let i = 0; i < 5; i++) {
+      document.getElementById('check_'+i).className = 'row-check';
+      document.getElementById('check_'+i).textContent = '';
+    }
+    document.getElementById('check_'+idx).className = 'row-check active';
+    document.getElementById('check_'+idx).textContent = '\u2713';
+  }
+
+  function selectUrgency(idx) {
+    for (let i = 0; i < 3; i++) {
+      document.getElementById('urg_'+i).className = 'row-check';
+      document.getElementById('urg_'+i).textContent = '';
+    }
+    document.getElementById('urg_'+idx).className = 'row-check active';
+    document.getElementById('urg_'+idx).textContent = '\u2713';
+  }
+
+  function retakePhoto() {
+    photoBase64 = '';
+    document.getElementById('previewWrap').style.display = 'none';
+    document.getElementById('uploadZone').style.display = 'block';
+    document.getElementById('aiResult').style.display = 'none';
+    document.getElementById('aiAnalyzing').style.display = 'none';
+    document.getElementById('descInput').value = '';
+    document.getElementById('dotDesc').style.display = 'none';
+    for (let i = 0; i < 5; i++) {
+      document.getElementById('check_'+i).className = 'row-check';
+      document.getElementById('check_'+i).textContent = '';
+    }
+    selectedCategory = '';
+    document.getElementById('fileInput').value = '';
+  }
+
+  function submitReport() {
+    const category = selectedCategory || 'Overig';
+    const description = document.getElementById('descInput').value || 'Geen omschrijving';
+    const urgency = document.getElementById('urg_0').classList.contains('active') ? 'Niet urgent' :
+                    document.getElementById('urg_1').classList.contains('active') ? 'Vandaag' : 'Spoed';
+
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = t[currentLang].submitting;
+    btn.disabled = true;
+
+    emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, {
+      name: 'SpotSolve App',
+      email: 'tanerkoc85@gmail.com',
+      category: category,
+      description: description,
+      urgency: urgency,
+      house_number: '86',
+      booking_number: '81668765',
+      time: new Date().toLocaleString('nl-NL')
+    }).then(() => {
+      document.getElementById('ticketCat').textContent = category;
+      document.getElementById('formScreen').style.display = 'none';
+      const s = document.getElementById('successScreen');
+      s.style.display = 'flex';
+      s.style.flexDirection = 'column';
+      setTimeout(showNotification, 10000);
+    }).catch((err) => {
+      btn.textContent = t[currentLang].submitBtn;
+      btn.disabled = false;
+      alert(t[currentLang].emailFout + JSON.stringify(err));
+    });
+  }
+
+  function showNotification() {
+    const bar = document.getElementById('notifBar');
+    bar.style.display = 'flex';
+  }
+
+  function openStatusPopup() {
+    document.getElementById('notifBar').style.display = 'none';
+    document.getElementById('statusOverlay').style.display = 'flex';
+  }
+
+  function closeStatusPopup() {
+    document.getElementById('statusOverlay').style.display = 'none';
+  }
+
+  function closePopupOutside(e) {
+    if (e.target === document.getElementById('statusOverlay')) closeStatusPopup();
+  }
+
+  function resetApp() {
+    document.getElementById('successScreen').style.display = 'none';
+    document.getElementById('formScreen').style.display = 'flex';
+    retakePhoto();
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = t[currentLang].submitBtn;
+    btn.disabled = false;
+  }
+</script>
+</body></html>
