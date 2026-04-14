@@ -2,7 +2,9 @@ services:
   spotsolve:
     image: ghcr.io/rvdbot/spotsolve:latest
     ports:
-      - "3031:80"
+      - "3031:3000"
     volumes:
-      - ./config.js:/usr/share/nginx/html/config.js:ro
+      - ./data:/app/data
+    environment:
+      - DATA_FILE=/app/data/settings.json
     restart: unless-stopped

@@ -1,3 +1,6 @@
 .env
 config.js
+config.example.js
+node_modules/
+data/
 .DS_Store

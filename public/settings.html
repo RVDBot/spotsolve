@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpotSolve — Instellingen</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f0f10;
+    --surface-1: #1a1a1c;
+    --surface-2: #232325;
+    --border:    rgba(255,255,255,0.08);
+    --text-1:    #f0f0f0;
+    --text-2:    #a0a0a8;
+    --text-3:    #606068;
+    --accent:    #3DBFBF;
+    --accent-h:  #2A9494;
+    --danger:    #f85149;
+    --success:   #3fb950;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+
+  .page { max-width: 680px; margin: 0 auto; }
+
+  /* Header */
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .back-btn {
+    color: var(--text-3); background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; padding: 4px;
+    transition: color .15s;
+  }
+  .back-btn:hover { color: var(--text-2); }
+  .header h1 { font-size: 18px; font-weight: 700; flex: 1; }
+  .version { font-size: 11px; color: var(--text-3); }
+
+  /* Token usage */
+  .token-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .token-card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .token-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .token-bucket {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .token-bucket-label { font-size: 11px; font-weight: 500; color: var(--text-2); margin-bottom: 8px; }
+  .token-bucket-total { font-size: 14px; font-weight: 600; }
+  .token-bucket-detail { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .token-bucket-cost { font-size: 12px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+  .token-models { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .token-model-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-3); margin-top: 3px; }
+
+  /* Sections */
+  .section {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px; cursor: pointer; width: 100%;
+    background: none; border: none; color: var(--text-1);
+    font-family: 'Inter', sans-serif; text-align: left;
+  }
+  .section-header:hover { background: rgba(255,255,255,.02); }
+  .chevron {
+    width: 16px; height: 16px; flex-shrink: 0;
+    color: var(--text-3); transition: transform .2s;
+  }
+  .chevron.open { transform: rotate(90deg); }
+  .section-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .status-dot.ok { background: var(--success); }
+  .status-dot.err { background: var(--danger); }
+
+  .section-body { padding: 0 20px 20px; display: none; }
+  .section-body.open { display: block; }
+
+  /* Fields */
+  .field { margin-bottom: 12px; }
+  .field:last-of-type { margin-bottom: 0; }
+  .field-label {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: .06em;
+    display: block; margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%; background: var(--bg); color: var(--text-1);
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    padding: 10px 12px; border-radius: 12px;
+    border: 1px solid var(--border); outline: none;
+    transition: border-color .15s;
+  }
+  .field input:hover, .field select:hover { border-color: var(--text-3); }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--text-3); }
+  .field select option { background: var(--surface-2); }
+
+  .save-btn {
+    width: 100%; margin-top: 16px;
+    background: var(--accent); color: white;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 10px; border-radius: 12px; border: none; cursor: pointer;
+    transition: background .15s, opacity .15s;
+  }
+  .save-btn:hover { background: var(--accent-h); }
+  .save-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 200px;
+  }
+  .spinner {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--accent); border-top-color: transparent;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .footer { margin-top: 24px; text-align: center; font-size: 11px; color: var(--text-3); }
+</style>
+</head>
+<body>
+<div class="page" id="app">
+  <div class="loading"><div class="spinner"></div></div>
+</div>
+
+<script>
+  let settings = {};
+  let tokenUsage = null;
+
+  const SECRET_KEYS = ['anthropic_api_key', 'emailjs_public_key', 'emailjs_service_id', 'emailjs_template_id'];
+
+  function fmt(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return String(n);
+  }
+
+  function tokenBucketHtml(label, b) {
+    const modelRows = b.models.map(m =>
+      `<div class="token-model-row">
+        <span>${m.model.replace('claude-', '')}</span>
+        <span>${fmt(m.input + m.output)} &middot; $${m.cost.toFixed(4)}</span>
+      </div>`
+    ).join('');
+    return `
+      <div class="token-bucket">
+        <div class="token-bucket-label">${label}</div>
+        <div class="token-bucket-total">${fmt(b.input + b.output)}</div>
+        <div class="token-bucket-detail">In: ${fmt(b.input)} / Out: ${fmt(b.output)}</div>
+        <div class="token-bucket-cost">$${b.cost.toFixed(4)}</div>
+        ${b.models.length ? `<div class="token-models">${modelRows}</div>` : ''}
+      </div>`;
+  }
+
+  function field(label, key, type = 'text', placeholder = '') {
+    const isSecret = SECRET_KEYS.includes(key);
+    const hasVal = settings[`has_${key}`];
+    const ph = isSecret ? (hasVal ? '••••••••' : placeholder) : (settings[key] || placeholder);
+    return `
+      <div class="field">
+        <label class="field-label">${label}</label>
+        <input
+          type="${isSecret ? 'password' : type}"
+          id="field_${key}"
+          placeholder="${ph}"
+          value="${isSecret ? '' : (settings[key] || '')}"
+        >
+      </div>`;
+  }
+
+  function selectField(label, key, options) {
+    const current = settings[key] || options[0].value;
+    const opts = options.map(o =>
+      `<option value="${o.value}" ${current === o.value ? 'selected' : ''}>${o.label}</option>`
+    ).join('');
+    return `
+      <div class="field">
+        <label class="field-label">${label}</label>
+        <select id="field_${key}">${opts}</select>
+      </div>`;
+  }
+
+  function section(title, keys, bodyHtml, isOk) {
+    const sectionId = 'sec_' + keys[0];
+    return `
+      <div class="section">
+        <button class="section-header" onclick="toggleSection('${sectionId}')">
+          <svg class="chevron" id="chev_${sectionId}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
+          <span class="section-title">${title}</span>
+          ${isOk !== undefined ? `<span class="status-dot ${isOk ? 'ok' : 'err'}"></span>` : ''}
+        </button>
+        <div class="section-body" id="${sectionId}">
+          ${bodyHtml}
+          <button class="save-btn" id="btn_${sectionId}" onclick="saveSection('${sectionId}', ${JSON.stringify(keys)})">Opslaan</button>
+        </div>
+      </div>`;
+  }
+
+  function toggleSection(id) {
+    const body = document.getElementById(id);
+    const chev = document.getElementById('chev_' + id);
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    chev.classList.toggle('open', !isOpen);
+  }
+
+  async function saveSection(sectionId, keys) {
+    const btn = document.getElementById('btn_' + sectionId);
+    btn.disabled = true;
+    btn.textContent = 'Opslaan...';
+
+    for (const key of keys) {
+      const el = document.getElementById('field_' + key);
+      if (!el) continue;
+      const val = el.value.trim();
+      if (SECRET_KEYS.includes(key) && !val) continue; // skip empty secret fields
+      if (!SECRET_KEYS.includes(key) && val === String(settings[key] || '')) continue; // skip unchanged
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value: val }),
+      });
+      if (SECRET_KEYS.includes(key)) {
+        settings['has_' + key] = !!val;
+      } else {
+        settings[key] = val;
+      }
+    }
+
+    btn.textContent = 'Opgeslagen!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Opslaan'; }, 2000);
+  }
+
+  function render() {
+    const hasAI = !!settings.has_anthropic_api_key;
+    const hasEmailJS = !!settings.has_emailjs_public_key;
+
+    const aiBody = `
+      ${field('Anthropic API Key', 'anthropic_api_key', 'password', 'sk-ant-...')}
+      ${selectField('Model', 'ai_model', [
+        { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (snel & goedkoop)' },
+        { value: 'claude-sonnet-4-6',         label: 'Claude Sonnet 4.6' },
+        { value: 'claude-opus-4-6',           label: 'Claude Opus 4.6 (krachtigst)' },
+      ])}`;
+
+    const emailBody = `
+      ${field('EmailJS Public Key', 'emailjs_public_key', 'password', 'Z4C4...')}
+      ${field('Service ID', 'emailjs_service_id', 'password', 'service_...')}
+      ${field('Template ID', 'emailjs_template_id', 'password', 'template_...')}`;
+
+    const tokenHtml = tokenUsage ? `
+      <div class="token-card">
+        <div class="token-card-title">Token Gebruik</div>
+        <div class="token-grid">
+          ${tokenBucketHtml('Totaal', tokenUsage.total)}
+          ${tokenBucketHtml('Laatste 7 dagen', tokenUsage.last7d)}
+          ${tokenBucketHtml('Laatste 30 dagen', tokenUsage.last30d)}
+        </div>
+      </div>` : '';
+
+    document.getElementById('app').innerHTML = `
+      <div class="header">
+        <button class="back-btn" onclick="location.href='/'">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+        <h1>Instellingen</h1>
+      </div>
+
+      ${tokenHtml}
+
+      ${section('AI Configuratie', ['anthropic_api_key', 'ai_model'], aiBody, hasAI)}
+      ${section('EmailJS', ['emailjs_public_key', 'emailjs_service_id', 'emailjs_template_id'], emailBody, hasEmailJS)}
+
+      <div class="footer">SpotSolve</div>
+    `;
+  }
+
+  async function init() {
+    const [s, t] = await Promise.all([
+      fetch('/api/settings').then(r => r.json()),
+      fetch('/api/token-usage').then(r => r.json()),
+    ]);
+    settings = s;
+    tokenUsage = t;
+    render();
+  }
+
+  init();
+</script>
+</body>
+</html>

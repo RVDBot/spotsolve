@@ -5,7 +5,6 @@
 <title>SpotSolve — Schade melden</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="config.js"></script>
 <style>
   :root {
     --teal: #3DBFBF;
@@ -586,9 +585,14 @@
     });
   }
 
-  emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
-
   let selectedCategory = '';
+  let _emailjsConfig = {};
+
+  // Load config from server (EmailJS keys)
+  fetch('/api/config').then(r => r.json()).then(cfg => {
+    _emailjsConfig = cfg;
+    if (cfg.emailjs_public_key) emailjs.init(cfg.emailjs_public_key);
+  });
   let photoBase64 = '';
 
   document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -624,17 +628,10 @@
 
   async function analyzeWithAI(base64Image) {
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CONFIG.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
           system: 'Je analyseert fotos van schade of problemen in vakantiewoningen. Antwoord ALLEEN met geldige JSON, geen markdown. Formaat: {"category": een van ["Kapot / beschadigd","Water / lekkage","Schoonmaak","Elektra","Overig"], "description": "korte Nederlandse zin die het probleem beschrijft", "urgency": een van ["Niet urgent","Vandaag","Spoed"]}',
           messages: [{
             role: 'user',
@@ -743,7 +740,7 @@
     btn.textContent = t[currentLang].submitting;
     btn.disabled = true;
 
-    emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, {
+    emailjs.send(_emailjsConfig.emailjs_service_id, _emailjsConfig.emailjs_template_id, {
       name: 'SpotSolve App',
       email: 'tanerkoc85@gmail.com',
       category: category,
