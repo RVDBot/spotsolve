@@ -147,6 +147,49 @@ app.post('/api/analyze', async (req, res) => {
   }
 })
 
+// POST /api/chat — AI receptie chat via Haiku
+app.post('/api/chat', async (req, res) => {
+  const data = loadData()
+  const apiKey = data.anthropic_api_key
+  if (!apiKey) return res.status(400).json({ error: 'Anthropic API key not configured' })
+
+  const messages = req.body.messages || []
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        system: 'Je bent de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt en behulpzaam met vragen over hun verblijf, de technische dienst en parkfaciliteiten. Antwoord altijd in de taal van de gast. Houd antwoorden kort (1-3 zinnen). Je naam is Daan.',
+        messages,
+      }),
+    })
+
+    const result = await response.json()
+
+    if (response.ok && result.usage) {
+      data.token_usage = data.token_usage || []
+      data.token_usage.push({
+        timestamp: Date.now(),
+        model: 'claude-haiku-4-5-20251001',
+        input_tokens:  result.usage.input_tokens,
+        output_tokens: result.usage.output_tokens,
+      })
+      saveData(data)
+    }
+
+    res.status(response.status).json(result)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // Serve settings page
 app.get('/settings', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'settings.html'))

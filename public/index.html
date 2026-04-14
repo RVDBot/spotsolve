@@ -292,7 +292,7 @@
     font-size: 24px; margin-bottom: 16px;
   }
   .status-popup h3 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
-  .status-popup p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; }
+  .status-popup p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 16px; }
   .popup-ok {
     width: 100%; background: var(--teal); color: white;
     border: none; border-radius: 12px; padding: 14px;
@@ -300,6 +300,47 @@
     cursor: pointer;
   }
   .popup-ok:hover { background: var(--teal-dark); }
+  .chat-trigger {
+    width: 100%; margin-top: 10px; background: transparent;
+    border: 1.5px solid var(--border); border-radius: 12px; padding: 11px;
+    font-size: 13px; font-weight: 600; color: var(--teal);
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s;
+  }
+  .chat-trigger:hover { background: var(--teal-light); border-color: var(--teal); }
+  .chat-area {
+    display: none; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px;
+  }
+  .chat-messages {
+    max-height: 220px; overflow-y: auto; display: flex;
+    flex-direction: column; gap: 8px; margin-bottom: 10px;
+  }
+  .chat-bubble {
+    max-width: 85%; padding: 9px 13px; border-radius: 14px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .chat-bubble.user {
+    background: var(--teal); color: white;
+    align-self: flex-end; border-bottom-right-radius: 4px;
+  }
+  .chat-bubble.assistant {
+    background: #f0f0f0; color: #1a1a1a;
+    align-self: flex-start; border-bottom-left-radius: 4px;
+  }
+  .chat-bubble.typing { opacity: 0.6; font-style: italic; }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input {
+    flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 9px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color: var(--teal); }
+  .chat-send {
+    background: var(--teal); color: white; border: none;
+    border-radius: 12px; padding: 9px 14px; font-size: 18px;
+    cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+  }
+  .chat-send:hover { background: var(--teal-dark); }
+  .chat-send:disabled { background: #a8d8d8; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -542,6 +583,14 @@
     <h3>Status van je melding</h3>
     <p>Technische dienst gaat ongeveer <strong>45 minuten</strong> het probleem oplossen. Je hoeft hiervoor niet in je huisje te blijven.</p>
     <button class="popup-ok" onclick="closeStatusPopup()">OK, begrepen</button>
+    <button class="chat-trigger" onclick="openChat()">&#128172; Ik heb een vraag</button>
+    <div class="chat-area" id="chatArea">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Stel je vraag…" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" id="chatSend" onclick="sendChat()">&#10148;</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -987,6 +1036,62 @@
 
     if (frame) cancelAnimationFrame(frame);
     frame = requestAnimationFrame(draw);
+  }
+
+  let chatHistory = [];
+
+  function openChat() {
+    const area = document.getElementById('chatArea');
+    area.style.display = 'block';
+    if (chatHistory.length === 0) {
+      addBubble('assistant', 'Hoi! Ik ben de receptie van Drentse Lagune. Hoe kan ik je helpen? &#128522;');
+    }
+    document.getElementById('chatInput').focus();
+  }
+
+  function addBubble(role, text) {
+    const msgs = document.getElementById('chatMessages');
+    const b = document.createElement('div');
+    b.className = 'chat-bubble ' + role;
+    b.innerHTML = text;
+    msgs.appendChild(b);
+    msgs.scrollTop = msgs.scrollHeight;
+    return b;
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    document.getElementById('chatSend').disabled = true;
+    addBubble('user', msg);
+    chatHistory.push({ role: 'user', content: msg });
+
+    const typing = addBubble('assistant', '…');
+    typing.classList.add('typing');
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: chatHistory }),
+      });
+      const data = await res.json();
+      const reply = data.content?.[0]?.text || 'Sorry, er ging iets mis.';
+      typing.textContent = reply;
+      typing.classList.remove('typing');
+      chatHistory.push({ role: 'assistant', content: reply });
+    } catch {
+      typing.textContent = 'Geen verbinding. Probeer het opnieuw.';
+      typing.classList.remove('typing');
+      chatHistory.pop();
+    }
+
+    document.getElementById('chatSend').disabled = false;
+    document.getElementById('chatInput').focus();
+    document.getElementById('chatMessages').scrollTop = 999999;
   }
 
   function showNotification() {
