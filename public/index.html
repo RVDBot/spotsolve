@@ -822,7 +822,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system: 'Je analyseert fotos van schade of problemen in vakantiewoningen. Antwoord ALLEEN met geldige JSON, geen markdown. Formaat: {"category": een van ["Kapot / beschadigd","Water / lekkage","Schoonmaak","Elektra","Overig"], "description": "korte Nederlandse zin die het probleem beschrijft", "urgency": een van ["Niet urgent","Vandaag","Spoed"]}',
+          lang: currentLang,
           messages: [{
             role: 'user',
             content: [
@@ -1048,7 +1048,12 @@
     const area = document.getElementById('chatArea');
     area.style.display = 'block';
     if (chatHistory.length === 0) {
-      addBubble('assistant', 'Hoi! Ik ben de receptie van Drentse Lagune. Hoe kan ik je helpen? &#128522;');
+      const greetings = {
+        nl: 'Hoi! Ik ben Daan van de receptie van Drentse Lagune. Hoe kan ik je helpen? &#128522;',
+        de: 'Hallo! Ich bin Daan von der Rezeption des Drentse Lagune. Wie kann ich Ihnen helfen? &#128522;',
+        en: 'Hi! I\'m Daan from the Drentse Lagune reception. How can I help you? &#128522;',
+      };
+      addBubble('assistant', greetings[currentLang] || greetings.nl);
     }
     document.getElementById('chatInput').focus();
   }
@@ -1080,7 +1085,7 @@
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: chatHistory, report: lastReport }),
+        body: JSON.stringify({ messages: chatHistory, report: lastReport, lang: currentLang }),
       });
       const data = await res.json();
       const reply = data.content?.[0]?.text || 'Sorry, er ging iets mis.';
@@ -1123,6 +1128,11 @@
     const btn = document.getElementById('submitBtn');
     btn.textContent = t[currentLang].submitBtn;
     btn.disabled = false;
+    // Reset chat
+    chatHistory = [];
+    lastReport = {};
+    document.getElementById('chatMessages').innerHTML = '';
+    document.getElementById('chatArea').style.display = 'none';
   }
 </script>
 </body></html>

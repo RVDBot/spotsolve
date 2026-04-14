@@ -111,6 +111,13 @@ app.post('/api/analyze', async (req, res) => {
   if (!apiKey) return res.status(400).json({ error: 'Anthropic API key not configured. Ga naar /settings.' })
 
   const model = data.ai_model || 'claude-haiku-4-5-20251001'
+  const lang = req.body.lang || 'nl'
+
+  const analyzeSystem = {
+    nl: 'Je analyseert fotos van schade of problemen in vakantiewoningen. Antwoord ALLEEN met geldige JSON, geen markdown. Formaat: {"category": een van ["Kapot / beschadigd","Water / lekkage","Schoonmaak","Elektra","Overig"], "description": "korte Nederlandse zin die het probleem beschrijft", "urgency": een van ["Niet urgent","Vandaag","Spoed"]}',
+    de: 'Du analysierst Fotos von Schäden oder Problemen in Ferienhäusern. Antworte NUR mit gültigem JSON, kein Markdown. Format: {"category": eines von ["Kapot / beschadigd","Water / lekkage","Schoonmaak","Elektra","Overig"], "description": "kurzer deutscher Satz, der das Problem beschreibt", "urgency": eines von ["Niet urgent","Vandaag","Spoed"]}',
+    en: 'You analyze photos of damage or problems in holiday homes. Reply ONLY with valid JSON, no markdown. Format: {"category": one of ["Kapot / beschadigd","Water / lekkage","Schoonmaak","Elektra","Overig"], "description": "short English sentence describing the problem", "urgency": one of ["Niet urgent","Vandaag","Spoed"]}',
+  }
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -123,7 +130,7 @@ app.post('/api/analyze', async (req, res) => {
       body: JSON.stringify({
         model,
         max_tokens: 300,
-        system: req.body.system,
+        system: analyzeSystem[lang] || analyzeSystem.nl,
         messages: req.body.messages,
       }),
     })
@@ -155,12 +162,21 @@ app.post('/api/chat', async (req, res) => {
 
   const messages = req.body.messages || []
   const report = req.body.report || {}
+  const chatLang = req.body.lang || 'nl'
 
-  const reportContext = report.category
-    ? `De gast heeft zojuist een melding gedaan: categorie "${report.category}", omschrijving: "${report.description}", urgentie: "${report.urgency}". Houd hier rekening mee in je antwoorden.`
-    : ''
+  const reportContext = report.category ? {
+    nl: `De gast heeft zojuist een melding gedaan: categorie "${report.category}", omschrijving: "${report.description}", urgentie: "${report.urgency}".`,
+    de: `Der Gast hat gerade eine Meldung gemacht: Kategorie "${report.category}", Beschreibung: "${report.description}", Dringlichkeit: "${report.urgency}".`,
+    en: `The guest just submitted a report: category "${report.category}", description: "${report.description}", urgency: "${report.urgency}".`,
+  }[chatLang] || '' : ''
 
-  const systemPrompt = `Je bent Daan, de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt en behulpzaam met vragen over hun verblijf, de technische dienst en parkfaciliteiten. Antwoord altijd in de taal van de gast. Houd antwoorden kort (1-3 zinnen). De technische dienst komt over ongeveer 45 minuten langs om het probleem op te lossen. ${reportContext}`
+  const basePrompt = {
+    nl: `Je bent Daan, de vriendelijke receptie van vakantiepark Drentse Lagune. Je helpt gasten beknopt met vragen over hun verblijf en parkfaciliteiten. Antwoord in het Nederlands. Houd antwoorden kort (1-3 zinnen). De technische dienst komt over ongeveer 45 minuten langs om het probleem op te lossen.`,
+    de: `Du bist Daan, der freundliche Rezeptionist des Ferienparks Drentse Lagune. Du hilfst Gästen knapp mit Fragen zu ihrem Aufenthalt und den Parkeinrichtungen. Antworte auf Deutsch. Halte Antworten kurz (1-3 Sätze). Der technische Dienst kommt in etwa 45 Minuten, um das Problem zu lösen.`,
+    en: `You are Daan, the friendly receptionist of holiday park Drentse Lagune. You help guests concisely with questions about their stay and park facilities. Reply in English. Keep answers short (1-3 sentences). The maintenance team will arrive in approximately 45 minutes to fix the issue.`,
+  }[chatLang] || ''
+
+  const systemPrompt = `${basePrompt} ${reportContext}`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
